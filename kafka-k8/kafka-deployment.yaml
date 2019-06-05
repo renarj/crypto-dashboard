@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: c-kafka
+  name: c-kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: c-kafka
+  template:
+    metadata:
+      labels:
+        app: c-kafka
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
+              value: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+            - name: KAFKA_INTER_BROKER_LISTENER_NAME
+              value: OUTSIDE
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: OUTSIDE://kafka-svc:30092,INSIDE://:9092
+            - name: KAFKA_LISTENERS
+              value: OUTSIDE://:30092,INSIDE://:9092
+            - name: KAFKA_BROKER_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: 192.168.99.100:30181
+            - name: KAFKA_CREATE_TOPICS
+              value: "crypto-topic:1:1"
+          image: wurstmeister/kafka
+          imagePullPolicy: IfNotPresent
+          name: c-kafka
+          ports:
+            - containerPort: 9092

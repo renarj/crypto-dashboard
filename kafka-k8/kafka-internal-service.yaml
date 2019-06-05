@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka-svc
+  labels:
+    app: c-kafka
+spec:
+  ports:
+    - port: 9092
+      name: kafka-internal-port
+  selector:
+    app: c-kafka
