@@ -36,6 +36,7 @@ class InfluxDBClient(_connectDetails: ConnectDetails, _databaseName: String) {
             influxDB.write(Point.measurement("crypto")
                     .time(System.currentTimeMillis(), TimeUnit.MILLISECONDS)
                     .tag("name", price.id)
+                    .tag("pair", price.pairName)
                     .addField("close", price.close)
                     .addField("volume", price.volume)
                     .addField("ask", price.ask)
