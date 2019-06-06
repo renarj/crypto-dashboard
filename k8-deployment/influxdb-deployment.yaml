@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: influxdb
+  labels:
+    app: influxdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: influxdb
+  template:
+    metadata:
+      labels:
+        app: influxdb
+    spec:
+      containers:
+        - name: influxdb
+          image: "influxdb:1.7.6-alpine"
+          imagePullPolicy: "IfNotPresent"
+          resources:
+            limits:
+              cpu: 2
+              memory: 2Gi
+            requests:
+              cpu: 0.1
+              memory: 256Mi
+          ports:
+            - name: api
+              containerPort: 8086
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: api
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: api
+            initialDelaySeconds: 5
+            timeoutSeconds: 1
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/influxdb
+            - name: config
+              mountPath: /etc/influxdb
+      volumes:
+        - name: data
+          emptyDir: {}
+        - name: config
+          configMap:
+            name: influxdb-config

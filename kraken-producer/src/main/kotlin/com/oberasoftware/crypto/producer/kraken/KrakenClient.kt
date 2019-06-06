@@ -19,9 +19,9 @@ fun main(args: Array<String>) {
 }
 
 class CommandLineParser : CliktCommand() {
-    private val topic: String by option(help="Kafka topic to publish to").default("crypto-topic")
-    private val kafkaHost: String by option(help="Kafka bootstrap server to connect to").default("localhost")
-    private val kafkaPort: Int by option(help = "Kafka bootstrap server port").int().default(9092)
+    private val topic: String by option(help="Kafka topic to publish to", envvar = "PRODUCER_TOPIC").default("crypto-topic")
+    private val kafkaHost: String by option(help="Kafka bootstrap server to connect to", envvar = "KAFKA_HOST").default("localhost")
+    private val kafkaPort: Int by option(help = "Kafka bootstrap server port", envvar = "KAFKA_PORT").int().default(9092)
 
     override fun run() {
         log.info("Starting Kraken to Kafka Producer with Kafka Host: {}:{} publishing to topic: {}", kafkaHost, kafkaPort, topic)

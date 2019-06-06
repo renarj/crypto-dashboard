@@ -5,8 +5,10 @@ metadata:
   labels:
     app: c-kafka
 spec:
+  type: ClusterIP
   ports:
     - port: 9092
+      targetPort: 9092
       name: kafka-internal-port
   selector:
     app: c-kafka

@@ -20,16 +20,16 @@ fun main(args: Array<String>) {
 }
 
 class CommandLineParser : CliktCommand() {
-    private val topic: String by option(help="Kafka topic to publish to").default("crypto-topic")
-    private val kafkaHost: String by option(help="Kafka bootstrap server to connect to").default("localhost")
-    private val kafkaPort: Int by option(help = "Kafka bootstrap server port").int().default(9092)
-    private val kafkaGroup: String by option(help="In case desired it can subscribe as part of a different Kafka group").default("crypto-tickers")
+    private val topic: String by option(help="Kafka topic to publish to", envvar = "KAFKA_CONSUMER_TOPIC").default("crypto-topic")
+    private val kafkaHost: String by option(help="Kafka bootstrap server to connect to", envvar = "KAFKA_HOST").default("localhost")
+    private val kafkaPort: Int by option(help = "Kafka bootstrap server port", envvar = "KAFKA_PORT").int().default(9092)
+    private val kafkaGroup: String by option(help="In case desired it can subscribe as part of a different Kafka group", envvar = "KAFKA_GROUP").default("crypto-tickers")
 
-    private val influxHost: String by option(help = "InfluxDB Host to write series to").default("localhost")
-    private val influxPort: Int by option(help="InfluxDB port to write series to").int().default(8086)
-    private val influxUser: String by option(help="InfluxDB username for writing").default("root")
-    private val influxPass: String by option(help="InfluxDB password for writing").default("root")
-    private val influxDatabase: String by option(help="InfluxDB database name").default("cryptoseries")
+    private val influxHost: String by option(help = "InfluxDB Host to write series to", envvar = "INFLUXDB_HOST").default("localhost")
+    private val influxPort: Int by option(help="InfluxDB port to write series to", envvar = "INFLUXDB_PORT").int().default(8086)
+    private val influxUser: String by option(help="InfluxDB username for writing", envvar = "INFLUXDB_USER").default("root")
+    private val influxPass: String by option(help="InfluxDB password for writing", envvar = "INFLUXDB_PASS").default("root")
+    private val influxDatabase: String by option(help="InfluxDB database name", envvar = "INFLUXDB_NAME").default("cryptoseries")
 
     override fun run() {
         log.info("Starting Crypto Kafka Consumer with Kafka Host: {}:{} consuming from topic: {}", kafkaHost, kafkaPort, topic)

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: crypto-subscriber
+  name: crypto-subscriber
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-subscriber
+  template:
+    metadata:
+      labels:
+        app: crypto-subscriber
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_CONSUMER_TOPIC
+              value: "crypto-topic"
+            - name: KAFKA_HOST
+              value: "kafka-public-svc"
+            - name: KAFKA_PORT
+              value: "30092"
+            - name: KAFKA_GROUP
+              value: "crypto-tickers"
+            - name: INFLUXDB_HOST
+              value: "influxdb-service"
+            - name: INFLUXDB_PORT
+              value: "8086"
+            - name: INFLUXDB_NAME
+              value: "cryptoseries"
+          image: renarj/crypto-subscriber:1.0.003
+          imagePullPolicy: IfNotPresent
+          name: crypto-subscriber

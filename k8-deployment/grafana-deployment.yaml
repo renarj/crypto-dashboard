@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana-dash
+  name: grafana-dash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana-dash
+  template:
+    metadata:
+      labels:
+        app: grafana-dash
+    spec:
+      containers:
+        - image: grafana/grafana:latest
+          imagePullPolicy: IfNotPresent
+          name: grafana-dash
+          ports:
+            - name: grafana-port
+              containerPort: 3000

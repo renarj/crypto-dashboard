@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: crypto-producer-kraken
+  name: crypto-producer-kraken
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-producer-kraken
+  template:
+    metadata:
+      labels:
+        app: crypto-producer-kraken
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_PRODUCER_TOPIC
+              value: "crypto-topic"
+            - name: KAFKA_HOST
+              value: "kafka-public-svc"
+            - name: KAFKA_PORT
+              value: "30092"
+          image: renarj/kraken-producer:1.0.004
+          imagePullPolicy: IfNotPresent
+          name: crypto-producer-kraken
