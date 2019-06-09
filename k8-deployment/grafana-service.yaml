@@ -5,11 +5,10 @@ metadata:
   labels:
     app: grafana-dash
 spec:
-  type: NodePort
+  type: LoadBalancer
   ports:
     - name: web
       port: 3000
-      nodePort: 30001
       targetPort: 3000
   selector:
     app: grafana-dash
