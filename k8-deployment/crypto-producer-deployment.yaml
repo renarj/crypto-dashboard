@@ -22,6 +22,6 @@ spec:
               value: "kafka-public-svc"
             - name: KAFKA_PORT
               value: "30092"
-          image: renarj/kraken-producer:1.0.004
+          image: renarj/kraken-producer:1.0.005
           imagePullPolicy: IfNotPresent
           name: crypto-producer-kraken
