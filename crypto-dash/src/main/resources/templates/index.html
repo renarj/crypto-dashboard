@@ -9,7 +9,7 @@
         <div class="card border-dark col-sm-3 pr-0 pl-0 mb-1 ml-1" id="pair-{{pairName}}">
             <div class="card-header text-white bg-primary">
                 <div class="float-left">
-                    <h6>{{pairName}} - {{close}}</h6>
+                    <h6 id="header-{{pairName}}">{{pairName}} - {{close}}</h6>
                 </div>
                 <div class="float-right">
                     <button type="button" class="btn btn-info" mode="{{mode}}" id="btn-{{pairName}}" pairId="{{pairName}}">{{mode}}</button>
@@ -26,7 +26,7 @@
         <div class="card border-dark col-sm-5 pr-0 pl-0 mb-1 ml-1">
             <div class="card-header"><h6>{{name}}</h6></div>
             <div class="card-body">
-                <p class="{{textClass}}">{{close}} ({{change}})%</p>
+                <p class="{{textClass}}" id="{{name}}-{{pairName}}">{{close}} ({{change}})%</p>
             </div>
         </div>
     </script>

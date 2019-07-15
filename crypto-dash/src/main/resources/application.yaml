@@ -1,7 +1,5 @@
 spring:
   influxdb:
-    url: http://localhost:8086
     username: user
     password: ~
-    database: cryptoseries
     retention-policy: autogen

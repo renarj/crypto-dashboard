@@ -68,9 +68,7 @@ class InfluxDBTickerService(private val template: InfluxDBTemplate<Point>) : Tic
 
     private fun retrieveTickers(label: String, query: Query): Map<String, TickerSnapshot> {
         val result = template.query(query)
-        log.info("We got: {} results", result.results.size)
-
-        log.info("Error: {}", result.results[0].error)
+        log.debug("We got: {} results", result.results.size)
 
         val m = mutableMapOf<String, TickerSnapshot>()
         if(!result.hasError() && result.results.size > 0) {
@@ -84,7 +82,7 @@ class InfluxDBTickerService(private val template: InfluxDBTemplate<Point>) : Tic
                 val volume = s.values[0][2] as Double
 
                 m[pair] = TickerSnapshot(label, zonedDateTime.toEpochSecond(), close, volume)
-                log.info("Found a pair with ticker snapshot: {}", m[pair])
+                log.debug("Found a pair with ticker snapshot: {}", m[pair])
             }
 
         }

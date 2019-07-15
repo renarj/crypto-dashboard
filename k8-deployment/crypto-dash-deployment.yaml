@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: crypto-dash
+  name: crypto-dash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: crypto-dash
+  template:
+    metadata:
+      labels:
+        app: crypto-dash
+    spec:
+      containers:
+        - env:
+            - name: INFLUXDB_HOST
+              value: "influxdb-service"
+            - name: INFLUXDB_PORT
+              value: "8086"
+            - name: SPRING_INFLUXDB_URL
+              value: "http://influxdb-service:8086"
+            - name: SPRING_INFLUXDB_DATABASE
+              value: "cryptoseries"
+          image: renarj/crypto-dash:1.0.004
+          imagePullPolicy: IfNotPresent
+          name: crypto-subscriber

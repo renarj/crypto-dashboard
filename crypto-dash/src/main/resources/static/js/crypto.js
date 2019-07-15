@@ -1,3 +1,41 @@
+function connect() {
+    console.log("Connecting to websocket");
+    var socket = new SockJS('/ws');
+    stompClient = Stomp.over(socket);
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/topic/tickers', function(frame){
+            handleStateUpdate(JSON.parse(frame.body));
+        });
+    });
+    stompClient.debug = null
+}
+
+function handleStateUpdate(state) {
+    $.each(state, function(i, ticker) {
+        var pairId = ticker.id;
+
+        var currentClose = ticker.current.close;
+        var currentElement = $("#Now" + "-" + pairId);
+        currentElement.html(currentClose + " (-%)");
+        $("#header-" + pairId).html(pairId + " - " + currentClose);
+
+        $.each(ticker.snapshots, function(i, snapshot) {
+            var name = snapshot.snapshotName;
+            var close = snapshot.close;
+            var change = calcChange(currentClose, close);
+            var color = change < 0 ? "text-danger" : "text-success";
+
+
+            var snapshotElement = $("#" + name + "-" + pairId);
+            snapshotElement.html(close + " (" + change + "%)");
+            snapshotElement.removeClass();
+            snapshotElement.addClass(color);
+        })
+    })
+
+}
+
 function loadDefaultAssets() {
     $.get("/tickers", function(data) {
         $.each(data, function(i, ticker) {
@@ -8,12 +46,7 @@ function loadDefaultAssets() {
 
 function loadFilteredAssets() {
     $.get("/tickers", function(data) {
-        var myPairs = Cookies.get('myPairs');
-        var pairs = myPairs.split(';');
-
         $.each(data, function(i, ticker) {
-
-
             renderTicker(ticker)
         })
     });
@@ -50,9 +83,14 @@ function renderTicker(ticker) {
     }
 }
 
+function calcChange(currentClose, snapshotClose) {
+    return (((currentClose / snapshotClose) * 100) - 100).toFixed(2);
+}
+
 function renderSnapshots(snapshots, id, current) {
     var data = {
         name: "Now",
+        pairName: id,
         close: current.close,
         change: "-",
         textClass: "text-info"
@@ -62,11 +100,12 @@ function renderSnapshots(snapshots, id, current) {
     $("#snapshot-" + id).append(rendered);
 
     $.each(snapshots, function(i, snapshot) {
-        var change = (((current.close / snapshot.close) * 100) - 100).toFixed(2);
+        var change = calcChange(current.close, snapshot.close);
         var color = change < 0 ? "text-danger" : "text-success";
 
         var data = {
             name: snapshot.snapshotName,
+            pairName: id,
             close: snapshot.close,
             change: change,
             textClass: color
@@ -113,9 +152,9 @@ function renderTemplate(templateName, data) {
 }
 
 $(document).ready(function() {
-    // Cookies.set('myPairs', "");
-    // Cookies.set('mode', "");
-
+    if(Cookies.get("myPairs") === undefined) {
+        Cookies.set("myPairs", "")
+    }
 
     if(Cookies.get('mode') === "myAssets") {
         loadFilteredAssets();
@@ -149,4 +188,6 @@ $(document).ready(function() {
 
         loadDefaultAssets()
     });
+
+    connect()
 });
