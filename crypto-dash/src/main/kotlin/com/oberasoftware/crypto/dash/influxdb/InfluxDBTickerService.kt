@@ -38,7 +38,7 @@ class InfluxDBTickerService(private val template: InfluxDBTemplate<Point>) : Tic
             }
         }
 
-        var latest = retrieveCurrentTickers()
+        val latest = retrieveCurrentTickers()
         val l = mutableListOf<AssetTickerOverview>()
         for ((k, v) in m) {
             val latestValue = latest.getOrElse(k, { TickerSnapshot("unknown", 0, 0.0, 0.0) })
@@ -73,16 +73,22 @@ class InfluxDBTickerService(private val template: InfluxDBTemplate<Point>) : Tic
         val m = mutableMapOf<String, TickerSnapshot>()
         if(!result.hasError() && result.results.size > 0) {
             for(s in result.results[0].series) {
-                val pair = s.tags["pair"] as String
+                val valid = s.values[0][0] != null && s.values[0][1] != null && s.values[0][2] != null
 
-                val time = s.values[0][0] as String
-                val zonedDateTime = ZonedDateTime.parse(time)
+                if(s.tags.contains("pair") && valid) {
+                    val pair = s.tags["pair"] as String
 
-                val close: Double = s.values[0][1] as Double
-                val volume = s.values[0][2] as Double
+                    val time = s.values[0][0] as String
+                    val zonedDateTime = ZonedDateTime.parse(time)
 
-                m[pair] = TickerSnapshot(label, zonedDateTime.toEpochSecond(), close, volume)
-                log.debug("Found a pair with ticker snapshot: {}", m[pair])
+                    val close: Double = s.values[0][1] as Double
+                    val volume = s.values[0][2] as Double
+
+                    m[pair] = TickerSnapshot(label, zonedDateTime.toEpochSecond(), close, volume)
+                    log.debug("Found a pair with ticker snapshot: {}", m[pair])
+                } else {
+                    log.warn("Result {} is invalid, missing pair or null result", s)
+                }
             }
 
         }

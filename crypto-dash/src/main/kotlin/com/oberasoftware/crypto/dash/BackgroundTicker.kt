@@ -1,6 +1,5 @@
 package com.oberasoftware.crypto.dash
 
-import com.google.common.util.concurrent.Uninterruptibles
 import com.google.common.util.concurrent.Uninterruptibles.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -26,12 +25,17 @@ class BackgroundTicker(private val tickerService: TickerService, private val mes
 
     override fun run() {
         while(!thread.isInterrupted) {
-            val assets = tickerService.retrieveTickers()
+            try {
+                val assets = tickerService.retrieveTickers()
 
-            log.debug("Sending: {} tickers to websocket", assets.size)
-            messagingTemplate.convertAndSend("/topic/tickers", assets)
+                log.debug("Sending: {} tickers to websocket", assets.size)
+                messagingTemplate.convertAndSend("/topic/tickers", assets)
 
-            sleepUninterruptibly(5, TimeUnit.SECONDS)
+                sleepUninterruptibly(5, TimeUnit.SECONDS)
+            } catch(e: Exception) {
+                log.error("Caught exception retrieving ticker information, sleeping one minute", e)
+                sleepUninterruptibly(1, TimeUnit.MINUTES)
+            }
         }
     }
 }
