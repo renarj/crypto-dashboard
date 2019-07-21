@@ -20,18 +20,27 @@ function handleStateUpdate(state) {
         currentElement.html(currentClose + " (-%)");
         $("#header-" + pairId).html(pairId + " - " + currentClose);
 
+        var positiveCount = 0;
+
         $.each(ticker.snapshots, function(i, snapshot) {
             var name = snapshot.snapshotName;
             var close = snapshot.close;
             var change = calcChange(currentClose, close);
             var color = change < 0 ? "text-danger" : "text-success";
 
+            if(change > 0) {
+                positiveCount++;
+            } else {
+                positiveCount--;
+            }
 
             var snapshotElement = $("#" + name + "-" + pairId);
             snapshotElement.html(close + " (" + change + "%)");
             snapshotElement.removeClass();
             snapshotElement.addClass(color);
-        })
+        });
+
+        setAssetColor(pairId, positiveCount);
     })
 
 }
@@ -76,11 +85,58 @@ function renderTicker(ticker) {
         var rendered = renderTemplate("cryptoAsset", data)
         $("#content").append(rendered);
 
-        console.log("Start rendering snapshtos");
-        renderSnapshots(ticker.snapshots, ticker.id, ticker.current)
+        var row = $("#snapshot-" + ticker.pairName);
+
+        console.log("Start rendering snapshots");
+        var count = renderSnapshots(ticker.snapshots, ticker.id, ticker.current)
+
+        var renderActions = renderTemplate("crypto-action", data);
+        row.append(renderActions);
+
+        setAssetColor(ticker.pairName, count);
+
+        $("#btn-" + ticker.pairName).one('click', function (e) {
+            e.preventDefault();
+
+            var mode = this.getAttribute("mode");
+            var myPairs = Cookies.get('myPairs');
+            var pairId = this.getAttribute('pairId');
+
+            if(mode === "Track") {
+                console.log("Track button clicked: " + pairId)
+
+                var ds = "";
+                if(myPairs !== undefined) {
+                    ds = myPairs
+                }
+                ds += pairId + ";";
+                Cookies.set('myPairs', ds, { expires: 365 });
+
+                $("#btn-" + pairId).html('Untrack')
+            } else {
+                console.log("Untrack button clicked: " + pairId)
+
+                Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
+
+                $("#pair-" + pairId).remove()
+            }
+        })
+
     } else {
         console.log("Skipping rendering of asset: " + ticker.id)
     }
+}
+
+function setAssetColor(pairId, count) {
+    var element = $("#pairColumn-" + pairId);
+
+    element.removeClass();
+    if(count < -2) {
+        element.addClass("bg-danger")
+    } else if(count > 2) {
+        element.addClass("bg-success")
+    }
+
 }
 
 function calcChange(currentClose, snapshotClose) {
@@ -96,11 +152,18 @@ function renderSnapshots(snapshots, id, current) {
         textClass: "text-info"
     };
 
+    var positiveCount = 0;
+
     var rendered = renderTemplate("snapshot", data);
     $("#snapshot-" + id).append(rendered);
 
     $.each(snapshots, function(i, snapshot) {
         var change = calcChange(current.close, snapshot.close);
+        if(change > 0) {
+            positiveCount++;
+        } else {
+            positiveCount--;
+        }
         var color = change < 0 ? "text-danger" : "text-success";
 
         var data = {
@@ -117,32 +180,7 @@ function renderSnapshots(snapshots, id, current) {
 
     });
 
-    $("#btn-" + id).one('click', function (e) {
-        e.preventDefault();
-
-        var mode = this.getAttribute("mode");
-        var myPairs = Cookies.get('myPairs');
-        var pairId = this.getAttribute('pairId');
-
-        if(mode === "Track") {
-            console.log("Track button clicked: " + pairId)
-
-            var ds = "";
-            if(myPairs !== undefined) {
-                ds = myPairs
-            }
-            ds += pairId + ";";
-            Cookies.set('myPairs', ds, { expires: 365 });
-
-            $("#btn-" + pairId).html('Untrack')
-        } else {
-            console.log("Untrack button clicked: " + pairId)
-
-            Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
-
-            $("#pair-" + pairId).remove()
-        }
-    })
+    return positiveCount;
 }
 
 function renderTemplate(templateName, data) {

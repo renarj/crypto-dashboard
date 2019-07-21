@@ -6,29 +6,19 @@
     <script th:src="@{/js/crypto.js}" src="/static/js/crypto.js"></script>
 
     <script id="cryptoAsset" type="x-tmpl-mustache">
-        <div class="card border-dark col-sm-10 pr-0 pl-0 mb-1 ml-1" id="pair-{{pairName}}">
-            <div class="card-header text-white bg-primary">
-                <div class="float-left">
-                    <h6 id="header-{{pairName}}">{{pairName}} - {{close}}</h6>
-                </div>
-                <div class="float-right">
-                    <button type="button" class="btn btn-info" mode="{{mode}}" id="btn-{{pairName}}" pairId="{{pairName}}">{{mode}}</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div class="row" id="snapshot-{{pairName}}">
-                </div>
-            </div>
-        </div>
+            <tr id="snapshot-{{pairName}}" class="{{assetStatus}}">
+                <td id="pairColumn-{{pairName}}">{{pairName}}</td>
+            </tr>
     </script>
 
     <script id="snapshot" type="x-tmpl-mustache">
-        <div class="card col-sm-2 pr-0 pl-0 mb-1 ml-0">
-            <div class="card-header"><h6>{{name}}</h6></div>
-            <div class="card-body">
-                <p class="{{textClass}}" id="{{name}}-{{pairName}}">{{close}} ({{change}})%</p>
-            </div>
-        </div>
+        <td class="{{textClass}}" id="{{name}}-{{pairName}}">{{close}} ({{change}})</td>
+    </script>
+
+    <script id="crypto-action" type="x-tmpl-mustache">
+        <td>
+            <button type="button" class="btn btn-info btn-sm" mode="{{mode}}" id="btn-{{pairName}}" pairId="{{pairName}}">{{mode}}</button>
+        </td>
     </script>
 
     <div class="container-fluid">
@@ -42,7 +32,23 @@
                 </li>
             </ul>
         </div>
-        <div class="row" id="content">
+        <div class="row">
+            <table class="table col-sm-10 ml-1 table-bordered table-dark table-hover table-sm table-striped">
+                <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Asset</th>
+                    <th scope="col">Now</th>
+                    <th scope="col">1h</th>
+                    <th scope="col">4h</th>
+                    <th scope="col">12h</th>
+                    <th scope="col">24h</th>
+                    <th scope="col">7d</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="content">
+                </tbody>
+            </table>
 
         </div>
     </div>
