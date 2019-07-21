@@ -6,7 +6,7 @@
     <script th:src="@{/js/crypto.js}" src="/static/js/crypto.js"></script>
 
     <script id="cryptoAsset" type="x-tmpl-mustache">
-        <div class="card border-dark col-sm-3 pr-0 pl-0 mb-1 ml-1" id="pair-{{pairName}}">
+        <div class="card border-dark col-sm-10 pr-0 pl-0 mb-1 ml-1" id="pair-{{pairName}}">
             <div class="card-header text-white bg-primary">
                 <div class="float-left">
                     <h6 id="header-{{pairName}}">{{pairName}} - {{close}}</h6>
@@ -16,14 +16,14 @@
                 </div>
             </div>
             <div class="card-body">
-                <div class="row"  id="snapshot-{{pairName}}">
+                <div class="row" id="snapshot-{{pairName}}">
                 </div>
             </div>
         </div>
     </script>
 
     <script id="snapshot" type="x-tmpl-mustache">
-        <div class="card border-dark col-sm-5 pr-0 pl-0 mb-1 ml-1">
+        <div class="card col-sm-2 pr-0 pl-0 mb-1 ml-0">
             <div class="card-header"><h6>{{name}}</h6></div>
             <div class="card-body">
                 <p class="{{textClass}}" id="{{name}}-{{pairName}}">{{close}} ({{change}})%</p>

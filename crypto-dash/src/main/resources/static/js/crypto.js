@@ -132,13 +132,13 @@ function renderSnapshots(snapshots, id, current) {
                 ds = myPairs
             }
             ds += pairId + ";";
-            Cookies.set('myPairs', ds)
+            Cookies.set('myPairs', ds, { expires: 365 });
 
             $("#btn-" + pairId).html('Untrack')
         } else {
             console.log("Untrack button clicked: " + pairId)
 
-            Cookies.set("myPairs", myPairs.replace(pairId+";", ""));
+            Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
 
             $("#pair-" + pairId).remove()
         }
@@ -153,7 +153,7 @@ function renderTemplate(templateName, data) {
 
 $(document).ready(function() {
     if(Cookies.get("myPairs") === undefined) {
-        Cookies.set("myPairs", "")
+        Cookies.set("myPairs", "", { expires: 365 })
     }
 
     if(Cookies.get('mode') === "myAssets") {
@@ -171,7 +171,7 @@ $(document).ready(function() {
         $("#index").removeClass("active");
 
         console.log("Showing my crypto assets: " + Cookies.get("myPairs"));
-        Cookies.set("mode", "myAssets");
+        Cookies.set("mode", "myAssets", { expires: 365 });
 
         loadFilteredAssets()
     });
@@ -183,7 +183,7 @@ $(document).ready(function() {
         $("#myTab").removeClass("active");
         $("#index").addClass("active");
 
-        Cookies.set("mode", "index");
+        Cookies.set("mode", "index", { expires: 365 });
         console.log("Showing all crypto assets");
 
         loadDefaultAssets()
