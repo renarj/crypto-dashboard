@@ -5,50 +5,32 @@ function connect() {
     stompClient.connect({}, function(frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickers', function(frame){
-            // handleStateUpdate(JSON.parse(frame.body));
+            handleStateUpdate(JSON.parse(frame.body));
         });
     });
     stompClient.debug = null
 }
 
 function handleStateUpdate(state) {
+    var table = $("#cryptoTable").DataTable();
+
     $.each(state, function(i, ticker) {
         var pairId = ticker.id;
 
-        var currentClose = ticker.current.close;
-        var currentElement = $("#Now" + "-" + pairId);
-        currentElement.html(currentClose + "");
-        $("#header-" + pairId).html(pairId + " - " + currentClose);
+        var row = table.row('#' + pairId);
 
-        var positiveCount = 0;
-
-        $.each(ticker.snapshots, function(i, snapshot) {
-            var name = snapshot.snapshotName;
-            var close = snapshot.close;
-            var change = calcChange(currentClose, close);
-            var color = change < 0 ? "text-danger" : "text-success";
-
-            if(change > 0) {
-                positiveCount++;
-            } else {
-                positiveCount--;
-            }
-
-            var snapshotElement = $("#" + name + "-" + pairId);
-            snapshotElement.html(close + " (" + change + "%)");
-            snapshotElement.setAttribute("data-order", change);
-            snapshotElement.removeClass();
-            snapshotElement.addClass(color);
-        });
-
-        setAssetColor(pairId, positiveCount);
-    })
-
+        if(row.length > 0) {
+            var d = buildRowData(ticker);
+            row.data(d);
+        }
+    });
+    table.draw();
 }
 
 function loadAssets() {
     $.get("/tickers", function(data) {
         var tb = drawTable();
+        tb.rows().remove();
 
         $.each(data, function(i, ticker) {
             renderTicker(ticker, tb)
@@ -62,154 +44,73 @@ function loadAssets() {
 function drawTable() {
     var tb = $("#cryptoTable");
 
-    tb.DataTable({
-        "paging":   false,
-        "ordering": true,
-        "info":     false,
-        "searching": false,
-        columns: [
-            { data: 'Asset' },
-            { data: 'Now' },
-            { data: {
-                _ : '1h.display',
-                sort: '1h.change'
-            }},
-            { data: {
-                _ : '4h.display',
-                sort: '4h.change'
-            }},
-            { data: {
-                _ : '12h.display',
-                sort: '12h.change'
-            }},
-            { data: {
-                _ : '24h.display',
-                sort: '24h.change'
-            }},
-            { data: {
-                _ : '7d.display',
-                sort: '7d.change'
-            }},
-            {
-                data: 'Actions',
-                defaultContent: ""
+    if (!$.fn.DataTable.isDataTable( '#cryptoTable' ) ) {
+        console.log("Initiailising table");
+        tb.DataTable({
+            "paging":   false,
+            "ordering": true,
+            "info":     false,
+            "searching": false,
+            "rowId":'Asset',
+            columns: [
+                { data: 'Asset' },
+                { data: 'Now' },
+                { data: {
+                        _ : '1h.display',
+                        sort: '1h.change'
+                    }},
+                { data: {
+                        _ : '4h.display',
+                        sort: '4h.change'
+                    }},
+                { data: {
+                        _ : '12h.display',
+                        sort: '12h.change'
+                    }},
+                { data: {
+                        _ : '24h.display',
+                        sort: '24h.change'
+                    }},
+                { data: {
+                        _ : '7d.display',
+                        sort: '7d.change'
+                    }},
+                {
+                    data: 'Actions',
+                    defaultContent: ""
+                }
+            ],
+            'rowCallback': function(row, data, index){
+
+                var count = 0;
+                $(row).find('td:eq(1)').attr('class', 'text-info');
+                count += setCellColor("1h", data, row, 2);
+                count += setCellColor("4h", data, row, 3);
+                count += setCellColor("12h", data, row, 4);
+                count += setCellColor("24h", data, row, 5);
+                count += setCellColor("7d", data, row, 6);
+
+                setAssetBackground(row, count);
+
+                var actionCell = $(row).find('td:eq(7)');
+                var isTracked = isTrackedPair(data.Asset);
+                if(isTracked) {
+                    actionCell.html("<button mode='untrack' class='btn btn-info btn-sm'>Untrack</button>")
+                } else {
+                    actionCell.html("<button mode='track' class='btn btn-info btn-sm'>Track</button>")
+                }
             }
-        ],
-        'rowCallback': function(row, data, index){
-            console.log("Row Callback: " + index);
+        });
 
-            $(row).find('td:eq(1)').attr('class', 'text-info');
-            setCellColor("1h", data, row, 2);
-            setCellColor("4h", data, row, 3);
-            setCellColor("12h", data, row, 4);
-            setCellColor("24h", data, row, 5);
-            setCellColor("7d", data, row, 6);
+        $('#cryptoTable tbody').on( 'click', 'button', function () {
+            var data = tb.DataTable().row( $(this).parents('tr') ).data();
+            var pairId = data.Asset;
+            var mode = $(this).attr("mode");
 
-            var actionCell = $(row).find('td:eq(7)');
-            var isTracked = isTrackedPair(data.Asset);
-            if(isTracked) {
-                actionCell.html("<button mode='untrack' class='btn btn-info btn-sm'>Untrack</button>")
-            } else {
-                actionCell.html("<button mode='track' class='btn btn-info btn-sm'>Track</button>")
-            }
-        }
-    });
-
-    $('#cryptoTable tbody').on( 'click', 'button', function () {
-        var data = tb.DataTable().row( $(this).parents('tr') ).data();
-        var pairId = data.Asset;
-        var mode = $(this).attr("mode");
-
-        var myPairs = Cookies.get('myPairs');
-
-        if(mode === "track") {
-            console.log("Track button clicked: " + pairId)
-
-            var ds = "";
-            if(myPairs !== undefined) {
-                ds = myPairs
-            }
-            ds += pairId + ";";
-            Cookies.set('myPairs', ds, { expires: 365 });
-
-            $(this).text("Untrack");
-            $(this).attr("mode", "untrack");
-        } else {
-            console.log("Untrack button clicked: " + pairId)
-
-            Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
-
-            $(this).text("Track");
-            $(this).attr("mode", "track");
-        }
-    } );
-
-    return tb.dataTable().api();
-}
-
-function setCellColor(label, data, row, cell) {
-    var td = $(row).find('td:eq(' + cell + ')');
-
-    var colorClass = "text-primary";
-    if(data[label].change < 0) {
-        colorClass = "text-danger";
-    } else if(data[label].change > 0) {
-        colorClass = "text-success";
-    }
-
-    td.attr('class', colorClass);
-}
-
-function isTrackedPair(pair) {
-    var myPairs = Cookies.get('myPairs');
-    var pairs = myPairs.split(';');
-    console.log("Tracked pairs: " + pairs)
-    return pairs.find(function (element) {
-        return element === pair
-    });
-}
-
-function renderTicker(ticker, tb) {
-    var myPairs = Cookies.get('myPairs');
-    var pairs = myPairs.split(';');
-    console.log("Tracked pairs: " + pairs)
-    var isTrackedPair = pairs.find(function(element) {
-        return element === ticker.pairName
-    });
-    console.log("Is tracked pair: " + isTrackedPair);
-
-    console.log("Render mode: " + Cookies.get('mode'))
-
-    var shouldRender = (isTrackedPair !== undefined && Cookies.get('mode') === "myAssets") || Cookies.get('mode') !== "myAssets";
-
-    if(shouldRender) {
-        console.log("Rendering ticker: " + ticker.id);
-
-        var currentClose = ticker.current.close;
-
-        var d = {
-            "Asset": ticker.pairName,
-            "Now": ticker.current.close,
-            "1h": buildSnapshot(ticker.snapshots, currentClose, "1h"),
-            "4h": buildSnapshot(ticker.snapshots, currentClose, "4h"),
-            "12h": buildSnapshot(ticker.snapshots, currentClose, "12h"),
-            "24h": buildSnapshot(ticker.snapshots, currentClose, "24h"),
-            "7d": buildSnapshot(ticker.snapshots, currentClose, "7d")
-
-        };
-
-        tb.row.add(d);
-
-
-        $("#btn-" + ticker.pairName).one('click', function (e) {
-            e.preventDefault();
-
-            var mode = this.getAttribute("mode");
             var myPairs = Cookies.get('myPairs');
-            var pairId = this.getAttribute('pairId');
 
-            if(mode === "Track") {
-                console.log("Track button clicked: " + pairId)
+            if(mode === "track") {
+                console.log("Track button clicked: " + pairId);
 
                 var ds = "";
                 if(myPairs !== undefined) {
@@ -218,19 +119,92 @@ function renderTicker(ticker, tb) {
                 ds += pairId + ";";
                 Cookies.set('myPairs', ds, { expires: 365 });
 
-                $("#btn-" + pairId).html('Untrack')
+                $(this).text("Untrack");
+                $(this).attr("mode", "untrack");
             } else {
-                console.log("Untrack button clicked: " + pairId)
+                console.log("Untrack button clicked: " + pairId);
 
                 Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
 
-                $("#pair-" + pairId).remove()
+                $(this).text("Track");
+                $(this).attr("mode", "track");
             }
-        })
+        } );
+    } else {
+        console.log("Table already initiailised");
+    }
 
+    return tb.dataTable().api();
+}
+
+function setAssetBackground(row, count) {
+    var td = $(row).find('td:eq(0)');
+
+    if(count < -2) {
+        td.attr('class', 'bg-danger');
+    } else if(count > 2) {
+        td.attr('class', "bg-success");
+    }
+
+}
+
+function setCellColor(label, data, row, cell) {
+    var td = $(row).find('td:eq(' + cell + ')');
+
+    var cnt = 0;
+    var colorClass = "text-primary";
+    if(data[label].change < 0) {
+        colorClass = "text-danger";
+        cnt = -1;
+    } else if(data[label].change > 0) {
+        colorClass = "text-success";
+        cnt = 1;
+    }
+
+    td.attr('class', colorClass);
+    return cnt;
+}
+
+function isTrackedPair(pair) {
+    var myPairs = Cookies.get('myPairs');
+    var pairs = myPairs.split(';');
+    return pairs.find(function (element) {
+        return element === pair
+    });
+}
+
+function renderTicker(ticker, tb) {
+    var myPairs = Cookies.get('myPairs');
+    var pairs = myPairs.split(';');
+    console.log("Tracked pairs: " + pairs);
+    var isTrackedPair = pairs.find(function(element) {
+        return element === ticker.pairName
+    });
+    console.log("Is tracked pair: " + isTrackedPair);
+
+    console.log("Render mode: " + Cookies.get('mode'));
+
+    var shouldRender = (isTrackedPair !== undefined && Cookies.get('mode') === "myAssets") || Cookies.get('mode') !== "myAssets";
+
+    if(shouldRender) {
+        console.log("Rendering ticker: " + ticker.id);
+        tb.row.add(buildRowData(ticker));
     } else {
         console.log("Skipping rendering of asset: " + ticker.id)
     }
+}
+
+function buildRowData(ticker) {
+    var currentClose = ticker.current.close;
+    return {
+        "Asset": ticker.pairName,
+        "Now": ticker.current.close,
+        "1h": buildSnapshot(ticker.snapshots, currentClose, "1h"),
+        "4h": buildSnapshot(ticker.snapshots, currentClose, "4h"),
+        "12h": buildSnapshot(ticker.snapshots, currentClose, "12h"),
+        "24h": buildSnapshot(ticker.snapshots, currentClose, "24h"),
+        "7d": buildSnapshot(ticker.snapshots, currentClose, "7d")
+    };
 }
 
 function buildSnapshot(snapshots, currentClose, label) {
@@ -251,70 +225,12 @@ function findSnapshot(snapshots, label) {
         }
     }
 
-    console.log("No match for label: " + label)
+    console.log("No match for label: " + label);
     return snapshots[0];
-}
-
-function setAssetColor(pairId, count) {
-    var element = $("#pairColumn-" + pairId);
-
-    element.removeClass();
-    if(count < -2) {
-        element.addClass("bg-danger")
-    } else if(count > 2) {
-        element.addClass("bg-success")
-    }
-
 }
 
 function calcChange(currentClose, snapshotClose) {
     return (((currentClose / snapshotClose) * 100) - 100).toFixed(2);
-}
-
-function renderSnapshots(snapshots, id, current, tb) {
-    var data = {
-        name: "Now",
-        pairName: id,
-        close: current.close,
-        change: "",
-        textClass: "text-info"
-    };
-
-    var positiveCount = 0;
-
-    var rendered = renderTemplate("snapshot", data);
-    $("#snapshot-" + id).append(rendered);
-
-    $.each(snapshots, function(i, snapshot) {
-        var change = calcChange(current.close, snapshot.close);
-        if(change > 0) {
-            positiveCount++;
-        } else {
-            positiveCount--;
-        }
-        var color = change < 0 ? "text-danger" : "text-success";
-
-        var data = {
-            name: snapshot.snapshotName,
-            pairName: id,
-            close: snapshot.close,
-            change: "(" + change +"%)",
-            textClass: color
-        };
-
-        console.log("Rendering snapshot: " + snapshot.snapshotName + " for " + id)
-        var rendered = renderTemplate("snapshot", data);
-        $("#snapshot-" + id).append(rendered);
-
-    });
-
-    return positiveCount;
-}
-
-function renderTemplate(templateName, data) {
-    var template = $('#' + templateName).html();
-    Mustache.parse(template);
-    return Mustache.render(template, data);
 }
 
 $(document).ready(function() {
