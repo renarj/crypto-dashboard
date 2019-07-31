@@ -24,6 +24,6 @@ spec:
               value: "http://influxdb-service:8086"
             - name: SPRING_INFLUXDB_DATABASE
               value: "cryptoseries"
-          image: renarj/crypto-dash:1.0.006
+          image: renarj/crypto-dash:1.0.007
           imagePullPolicy: IfNotPresent
           name: crypto-subscriber
