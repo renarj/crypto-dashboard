@@ -5,7 +5,7 @@ function connect() {
     stompClient.connect({}, function(frame) {
         console.log('Connected: ' + frame);
         stompClient.subscribe('/topic/tickers', function(frame){
-            handleStateUpdate(JSON.parse(frame.body));
+            // handleStateUpdate(JSON.parse(frame.body));
         });
     });
     stompClient.debug = null
@@ -17,7 +17,7 @@ function handleStateUpdate(state) {
 
         var currentClose = ticker.current.close;
         var currentElement = $("#Now" + "-" + pairId);
-        currentElement.html(currentClose + " (-%)");
+        currentElement.html(currentClose + "");
         $("#header-" + pairId).html(pairId + " - " + currentClose);
 
         var positiveCount = 0;
@@ -36,6 +36,7 @@ function handleStateUpdate(state) {
 
             var snapshotElement = $("#" + name + "-" + pairId);
             snapshotElement.html(close + " (" + change + "%)");
+            snapshotElement.setAttribute("data-order", change);
             snapshotElement.removeClass();
             snapshotElement.addClass(color);
         });
@@ -45,23 +46,130 @@ function handleStateUpdate(state) {
 
 }
 
-function loadDefaultAssets() {
+function loadAssets() {
     $.get("/tickers", function(data) {
+        var tb = drawTable();
+
         $.each(data, function(i, ticker) {
-            renderTicker(ticker)
-        })
+            renderTicker(ticker, tb)
+        });
+
+        tb.draw();
+
     });
 }
 
-function loadFilteredAssets() {
-    $.get("/tickers", function(data) {
-        $.each(data, function(i, ticker) {
-            renderTicker(ticker)
-        })
+function drawTable() {
+    var tb = $("#cryptoTable");
+
+    tb.DataTable({
+        "paging":   false,
+        "ordering": true,
+        "info":     false,
+        "searching": false,
+        columns: [
+            { data: 'Asset' },
+            { data: 'Now' },
+            { data: {
+                _ : '1h.display',
+                sort: '1h.change'
+            }},
+            { data: {
+                _ : '4h.display',
+                sort: '4h.change'
+            }},
+            { data: {
+                _ : '12h.display',
+                sort: '12h.change'
+            }},
+            { data: {
+                _ : '24h.display',
+                sort: '24h.change'
+            }},
+            { data: {
+                _ : '7d.display',
+                sort: '7d.change'
+            }},
+            {
+                data: 'Actions',
+                defaultContent: ""
+            }
+        ],
+        'rowCallback': function(row, data, index){
+            console.log("Row Callback: " + index);
+
+            $(row).find('td:eq(1)').attr('class', 'text-info');
+            setCellColor("1h", data, row, 2);
+            setCellColor("4h", data, row, 3);
+            setCellColor("12h", data, row, 4);
+            setCellColor("24h", data, row, 5);
+            setCellColor("7d", data, row, 6);
+
+            var actionCell = $(row).find('td:eq(7)');
+            var isTracked = isTrackedPair(data.Asset);
+            if(isTracked) {
+                actionCell.html("<button mode='untrack' class='btn btn-info btn-sm'>Untrack</button>")
+            } else {
+                actionCell.html("<button mode='track' class='btn btn-info btn-sm'>Track</button>")
+            }
+        }
+    });
+
+    $('#cryptoTable tbody').on( 'click', 'button', function () {
+        var data = tb.DataTable().row( $(this).parents('tr') ).data();
+        var pairId = data.Asset;
+        var mode = $(this).attr("mode");
+
+        var myPairs = Cookies.get('myPairs');
+
+        if(mode === "track") {
+            console.log("Track button clicked: " + pairId)
+
+            var ds = "";
+            if(myPairs !== undefined) {
+                ds = myPairs
+            }
+            ds += pairId + ";";
+            Cookies.set('myPairs', ds, { expires: 365 });
+
+            $(this).text("Untrack");
+            $(this).attr("mode", "untrack");
+        } else {
+            console.log("Untrack button clicked: " + pairId)
+
+            Cookies.set("myPairs", myPairs.replace(pairId+";", ""), { expires: 365 });
+
+            $(this).text("Track");
+            $(this).attr("mode", "track");
+        }
+    } );
+
+    return tb.dataTable().api();
+}
+
+function setCellColor(label, data, row, cell) {
+    var td = $(row).find('td:eq(' + cell + ')');
+
+    var colorClass = "text-primary";
+    if(data[label].change < 0) {
+        colorClass = "text-danger";
+    } else if(data[label].change > 0) {
+        colorClass = "text-success";
+    }
+
+    td.attr('class', colorClass);
+}
+
+function isTrackedPair(pair) {
+    var myPairs = Cookies.get('myPairs');
+    var pairs = myPairs.split(';');
+    console.log("Tracked pairs: " + pairs)
+    return pairs.find(function (element) {
+        return element === pair
     });
 }
 
-function renderTicker(ticker) {
+function renderTicker(ticker, tb) {
     var myPairs = Cookies.get('myPairs');
     var pairs = myPairs.split(';');
     console.log("Tracked pairs: " + pairs)
@@ -76,24 +184,22 @@ function renderTicker(ticker) {
 
     if(shouldRender) {
         console.log("Rendering ticker: " + ticker.id);
-        var data = {
-            pairName : ticker.pairName,
-            close : ticker.current.close,
-            mode : isTrackedPair !== undefined ? "Untrack" : "Track"
+
+        var currentClose = ticker.current.close;
+
+        var d = {
+            "Asset": ticker.pairName,
+            "Now": ticker.current.close,
+            "1h": buildSnapshot(ticker.snapshots, currentClose, "1h"),
+            "4h": buildSnapshot(ticker.snapshots, currentClose, "4h"),
+            "12h": buildSnapshot(ticker.snapshots, currentClose, "12h"),
+            "24h": buildSnapshot(ticker.snapshots, currentClose, "24h"),
+            "7d": buildSnapshot(ticker.snapshots, currentClose, "7d")
+
         };
 
-        var rendered = renderTemplate("cryptoAsset", data)
-        $("#content").append(rendered);
+        tb.row.add(d);
 
-        var row = $("#snapshot-" + ticker.pairName);
-
-        console.log("Start rendering snapshots");
-        var count = renderSnapshots(ticker.snapshots, ticker.id, ticker.current)
-
-        var renderActions = renderTemplate("crypto-action", data);
-        row.append(renderActions);
-
-        setAssetColor(ticker.pairName, count);
 
         $("#btn-" + ticker.pairName).one('click', function (e) {
             e.preventDefault();
@@ -127,6 +233,28 @@ function renderTicker(ticker) {
     }
 }
 
+function buildSnapshot(snapshots, currentClose, label) {
+    var snapshot = findSnapshot(snapshots, label).close;
+    return {
+        "display": snapshot + " (" + calcChange(currentClose, snapshot) + ")",
+        "change": calcChange(currentClose, snapshot)
+    }
+}
+
+function findSnapshot(snapshots, label) {
+
+    for(var i = 0; i < snapshots.length; i++) {
+        var s = snapshots[i];
+
+        if(s.snapshotName === label) {
+            return s;
+        }
+    }
+
+    console.log("No match for label: " + label)
+    return snapshots[0];
+}
+
 function setAssetColor(pairId, count) {
     var element = $("#pairColumn-" + pairId);
 
@@ -143,12 +271,12 @@ function calcChange(currentClose, snapshotClose) {
     return (((currentClose / snapshotClose) * 100) - 100).toFixed(2);
 }
 
-function renderSnapshots(snapshots, id, current) {
+function renderSnapshots(snapshots, id, current, tb) {
     var data = {
         name: "Now",
         pairName: id,
         close: current.close,
-        change: "-",
+        change: "",
         textClass: "text-info"
     };
 
@@ -170,7 +298,7 @@ function renderSnapshots(snapshots, id, current) {
             name: snapshot.snapshotName,
             pairName: id,
             close: snapshot.close,
-            change: change,
+            change: "(" + change +"%)",
             textClass: color
         };
 
@@ -194,38 +322,33 @@ $(document).ready(function() {
         Cookies.set("myPairs", "", { expires: 365 })
     }
 
-    if(Cookies.get('mode') === "myAssets") {
-        loadFilteredAssets();
-    } else {
-        loadDefaultAssets();
-    }
-
+    loadAssets();
 
     $('#myTab').on('click', function (e) {
         e.preventDefault();
 
-        $("#content").empty();
+        // $("#content").empty();
         $("#myTab").addClass("active");
         $("#index").removeClass("active");
 
         console.log("Showing my crypto assets: " + Cookies.get("myPairs"));
         Cookies.set("mode", "myAssets", { expires: 365 });
 
-        loadFilteredAssets()
+        loadAssets()
     });
 
     $('#index').on('click', function (e) {
         e.preventDefault();
 
-        $("#content").empty();
+        // $("#content").empty();
         $("#myTab").removeClass("active");
         $("#index").addClass("active");
 
         Cookies.set("mode", "index", { expires: 365 });
         console.log("Showing all crypto assets");
 
-        loadDefaultAssets()
+        loadAssets()
     });
 
-    connect()
+    connect();
 });

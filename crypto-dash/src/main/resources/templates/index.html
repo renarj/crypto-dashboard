@@ -12,7 +12,7 @@
     </script>
 
     <script id="snapshot" type="x-tmpl-mustache">
-        <td class="{{textClass}}" id="{{name}}-{{pairName}}">{{close}} ({{change}})</td>
+        <td class="{{textClass}}" id="{{name}}-{{pairName}}" data-order="{{change}}">{{close}} {{change}}</td>
     </script>
 
     <script id="crypto-action" type="x-tmpl-mustache">
@@ -33,23 +33,24 @@
             </ul>
         </div>
         <div class="row">
-            <table class="table col-sm-10 ml-1 table-bordered table-dark table-hover table-sm table-striped">
-                <thead class="thead-dark">
-                <tr>
-                    <th scope="col">Asset</th>
-                    <th scope="col">Now</th>
-                    <th scope="col">1h</th>
-                    <th scope="col">4h</th>
-                    <th scope="col">12h</th>
-                    <th scope="col">24h</th>
-                    <th scope="col">7d</th>
-                    <th></th>
-                </tr>
-                </thead>
-                <tbody id="content">
-                </tbody>
-            </table>
-
+            <div class="col-sm-10">
+                <table id="cryptoTable" class="table ml-1 table-bordered table-dark table-hover table-sm table-striped" style="width:100%">
+                    <thead class="thead-dark">
+                    <tr>
+                        <th scope="col">Asset</th>
+                        <th scope="col">Now</th>
+                        <th scope="col">1h</th>
+                        <th scope="col">4h</th>
+                        <th scope="col">12h</th>
+                        <th scope="col">24h</th>
+                        <th scope="col">7d</th>
+                        <th></th>
+                    </tr>
+                    </thead>
+                    <tbody id="content">
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
