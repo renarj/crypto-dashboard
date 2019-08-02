@@ -144,6 +144,8 @@ function setAssetBackground(row, count) {
         td.attr('class', 'bg-danger');
     } else if(count > 2) {
         td.attr('class', "bg-success");
+    } else {
+        td.attr('class', '');
     }
 
 }
