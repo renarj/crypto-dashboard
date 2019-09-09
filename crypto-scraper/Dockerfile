@@ -13,8 +13,8 @@ ADD ${BSH_SCRIPT} start.sh
 RUN chmod +x start.sh
 
 ARG JAR_FILE
-ADD ${JAR_FILE} kraken-producer.jar
+ADD ${JAR_FILE} crypto-scraper.jar
 
-RUN bash -c 'touch /kraken-producer.jar'
+RUN bash -c 'touch /crypto-scraper.jar'
 
 CMD ["/start.sh"]

@@ -9,10 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>kraken-producer</artifactId>
+    <artifactId>crypto-scraper</artifactId>
 
     <properties>
-        <fuel.version>2.1.0</fuel.version>
+        <fuel.version>2.2.1</fuel.version>
     </properties>
 
     <dependencies>

@@ -27,7 +27,7 @@ function handleStateUpdate(state) {
     table.draw();
 }
 
-function loadAssets() {
+function loadAssets(connect) {
     $.get("/tickers", function(data) {
         var tb = drawTable();
         tb.rows().remove();
@@ -38,6 +38,9 @@ function loadAssets() {
 
         tb.draw();
 
+        if(connect) {
+            connect();
+        }
     });
 }
 
@@ -240,7 +243,7 @@ $(document).ready(function() {
         Cookies.set("myPairs", "", { expires: 365 })
     }
 
-    loadAssets();
+    loadAssets(true);
 
     $('#myTab').on('click', function (e) {
         e.preventDefault();
@@ -252,7 +255,7 @@ $(document).ready(function() {
         console.log("Showing my crypto assets: " + Cookies.get("myPairs"));
         Cookies.set("mode", "myAssets", { expires: 365 });
 
-        loadAssets()
+        loadAssets(false);
     });
 
     $('#index').on('click', function (e) {
@@ -265,8 +268,6 @@ $(document).ready(function() {
         Cookies.set("mode", "index", { expires: 365 });
         console.log("Showing all crypto assets");
 
-        loadAssets()
+        loadAssets(false);
     });
-
-    connect();
 });

@@ -95,7 +95,7 @@
     </dependencyManagement>
 
     <modules>
-        <module>kraken-producer</module>
+        <module>crypto-scraper</module>
         <module>crypto-subscriber</module>
         <module>crypto-alert</module>
         <module>crypto-common</module>

@@ -1,4 +1,4 @@
-package com.oberasoftware.crypto.producer.kraken
+package com.oberasoftware.crypto.producer
 
 import com.google.gson.Gson
 import com.oberasoftware.crypto.common.AssetPriceEvent
@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 
-class KrakenKafkaProducer(_topic: String, _host: String, _port: Int) {
+class CryptoKafkaProducer(_topic: String, _host: String, _port: Int) {
     private val topic: String = _topic
     private val host: String = _host
     private val port: Int = _port
 
     private companion object {
-        val log: Logger = LoggerFactory.getLogger(KrakenKafkaProducer::class.java.canonicalName)
+        val log: Logger = LoggerFactory.getLogger(CryptoKafkaProducer::class.java.canonicalName)
     }
     private val props = Properties()
     private val producer: KafkaProducer<String, String>
@@ -33,10 +33,10 @@ class KrakenKafkaProducer(_topic: String, _host: String, _port: Int) {
         producer = KafkaProducer(props)
     }
 
-    fun publishTicker(tickers : List<KrakenTicker>) {
+    fun publishTicker(tickers : List<AssetPrice>) {
         log.debug("Sending {} tickers to Kafka", tickers.size)
         for(ticker in tickers) {
-            val ap = AssetPriceEvent(ticker.id, ticker.altName, ticker.ask, ticker.bid, ticker.close, ticker.volume, ticker.low, ticker.high)
+            val ap = AssetPriceEvent(ticker.id, ticker.exchange, ticker.pairName, ticker.btcPair, ticker.last)
             val json = Gson().toJson(ap)
 
             val r = ProducerRecord<String, String>(topic, ap.id, json)

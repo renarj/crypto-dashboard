@@ -2,25 +2,22 @@ package com.oberasoftware.crypto.producer.kraken
 
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.google.gson.JsonParser
+import com.oberasoftware.crypto.producer.AssetPrice
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class KrakenTicker(_id: String, _altName: String, _ask: Double, _bid: Double, _close: Double, _volume24Hours: Double, _low24H: Double, _high24H: Double) {
+class KrakenTicker(_id: String, _altName: String, _btcPair: Boolean, _close: Double) {
     private companion object {
         val log: Logger = LoggerFactory.getLogger(KrakenTicker::class.java.canonicalName)
     }
 
     val id: String = _id
     val altName: String = _altName
-    val ask: Double = _ask
-    val bid: Double = _bid
     val close: Double = _close
-    val volume: Double = _volume24Hours
-    val low: Double = _low24H
-    val high: Double = _high24H
+    val btcPair: Boolean = _btcPair
 
     override fun toString(): String {
-        return "KrakenTicker(id='$id', altName='$altName', ask=$ask, bid=$bid, close=$close, volume=$volume, low=$low, high=$high)"
+        return "KrakenTicker(id='$id', altName='$altName', close=$close, btcPair=$btcPair)"
     }
 
     class Deserializer(_altNames: Map<String, String>) : ResponseDeserializable<List<KrakenTicker>> {
@@ -44,7 +41,9 @@ class KrakenTicker(_id: String, _altName: String, _ask: Double, _bid: Double, _c
                 val high = ticker.getAsJsonArray("h")[1].asString.toDouble()
                 val altName = altNames.getOrDefault(key, key)
 
-                l.add(KrakenTicker(key, altName, ask, bid, close, volume, low, high))
+                val btcPair = altName.contains("XBT")
+
+                l.add(KrakenTicker(key, altName, btcPair,close))
             }
             return l
         }
