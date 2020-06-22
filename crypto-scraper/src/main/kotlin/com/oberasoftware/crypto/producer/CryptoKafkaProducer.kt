@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 
 
-class CryptoKafkaProducer(_topic: String, _host: String, _port: Int) {
+class CryptoKafkaProducer(_topic: String, _host: String, _port: Int) : ICryptoProducer {
     private val topic: String = _topic
     private val host: String = _host
     private val port: Int = _port
@@ -33,7 +33,7 @@ class CryptoKafkaProducer(_topic: String, _host: String, _port: Int) {
         producer = KafkaProducer(props)
     }
 
-    fun publishTicker(tickers : List<AssetPrice>) {
+    override fun publishTicker(tickers : List<AssetPrice>) {
         log.debug("Sending {} tickers to Kafka", tickers.size)
         for(ticker in tickers) {
             val ap = AssetPriceEvent(ticker.id, ticker.exchange, ticker.pairName, ticker.btcPair, ticker.last)

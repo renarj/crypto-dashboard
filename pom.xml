@@ -20,6 +20,7 @@
         <docker.image.prefix>crypto-dashboard</docker.image.prefix>
         <java.version>11</java.version>
         <jasdb.version>2.0-SNAPSHOT</jasdb.version>
+        <rabbitmq.version>5.9.0</rabbitmq.version>
     </properties>
 
     <developers>
@@ -91,6 +92,12 @@
                 <artifactId>jasdb-service</artifactId>
                 <version>${jasdb.version}</version>
             </dependency>
+            <dependency>
+                <groupId>com.rabbitmq</groupId>
+                <artifactId>amqp-client</artifactId>
+                <version>${rabbitmq.version}</version>
+            </dependency>
+
         </dependencies>
     </dependencyManagement>
 

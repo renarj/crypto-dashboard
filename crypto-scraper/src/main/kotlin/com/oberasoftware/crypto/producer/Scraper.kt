@@ -15,17 +15,19 @@ fun main(args: Array<String>) {
 }
 
 class CommandLineParser : CliktCommand() {
-    private val topic: String by option(help="Kafka topic to publish to", envvar = "PRODUCER_TOPIC").default("crypto-topic")
-    private val kafkaHost: String by option(help="Kafka bootstrap server to connect to", envvar = "KAFKA_HOST").default("localhost")
-    private val kafkaPort: Int by option(help = "Kafka bootstrap server port", envvar = "KAFKA_PORT").int().default(9092)
+    private val topic: String by option(help="topic to publish to", envvar = "PRODUCER_TOPIC").default("crypto-topic")
+    private val rbqHost: String by option(help="Message Topic Server Host", envvar = "RBQ_HOST").default("localhost")
+    private val rbqPort: Int by option(help = "Message Topic Server port", envvar = "RBQ_PORT").int().default(5672)
+    private val requiresValidCerts: String by option(help = "Bypass certificate validation", envvar = "VALID_CERTS").default("true")
 
     override fun run() {
-        log.info("Starting Scraper to Kafka Producer with Kafka Host: {}:{} publishing to topic: {}", kafkaHost, kafkaPort, topic)
+        log.info("Starting Scraper to Producer with Host: {}:{} publishing to topic: {}", rbqHost, rbqPort, topic)
 
-        val producer = CryptoKafkaProducer(topic, kafkaHost, kafkaPort)
+//        val producer = CryptoKafkaProducer(topic, kafkaHost, kafkaPort)
+        val producer = CryptoRabbitProducer(topic, rbqHost, rbqPort)
 
         log.info("Starting threads for Binance and Kraken scrapers")
-        val krakenRunner = Runnable { KrakenClient(producer).loop() }
+        val krakenRunner = Runnable { KrakenClient(producer, requiresValidCerts).loop() }
         val binanceRunner = Runnable { BinanceClient(producer).loop() }
 
         val krakenThread = Thread(krakenRunner)
@@ -33,17 +35,9 @@ class CommandLineParser : CliktCommand() {
 
         krakenThread.start()
         binanceThread.start()
-
-        krakenThread.join()
-//
-//        val threadPool = Executors.newFixedThreadPool(4)
-//        threadPool.submit(krakenRunner)
-//        threadPool.submit(binanceRunner)
-//
-//        threadPool.
-
-
-
         log.info("Threads started")
+
+        //wait forever until system exit
+        krakenThread.join()
     }
 }

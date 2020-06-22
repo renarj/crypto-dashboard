@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.Uninterruptibles
 import com.google.common.util.concurrent.Uninterruptibles.sleepUninterruptibly
 import com.oberasoftware.crypto.producer.AssetPrice
 import com.oberasoftware.crypto.producer.CryptoKafkaProducer
+import com.oberasoftware.crypto.producer.ICryptoProducer
 import com.oberasoftware.crypto.producer.kraken.KrakenClient
 import kotlinx.coroutines.runBlocking
 import org.slf4j.Logger
@@ -13,8 +14,8 @@ import java.util.concurrent.TimeUnit
 
 val log: Logger = LoggerFactory.getLogger(BinanceClient::class.java.canonicalName)
 
-class BinanceClient(_kafkaProducer: CryptoKafkaProducer) {
-    private val kafkaProducer: CryptoKafkaProducer = _kafkaProducer
+class BinanceClient(_kafkaProducer: ICryptoProducer) {
+    private val kafkaProducer: ICryptoProducer = _kafkaProducer
 
     private companion object {
         const val PRICE_URL = "https://api.binance.com/api/v3/ticker/price"

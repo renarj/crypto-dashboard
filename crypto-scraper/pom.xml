@@ -40,6 +40,10 @@
             <groupId>com.oberasoftware</groupId>
             <artifactId>crypto-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+        </dependency>
 
         <dependency>
             <groupId>com.github.ajalt</groupId>
@@ -62,7 +66,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>com.oberasoftware.crypto.producer.kraken.KrakenClientKt</mainClass>
+                                    <mainClass>com.oberasoftware.crypto.producer.ScraperKt</mainClass>
                                 </manifest>
                             </archive>
                             <finalName>${project.artifactId}</finalName>
